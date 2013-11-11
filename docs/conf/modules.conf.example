@@ -1514,6 +1514,11 @@
 # SAJOIN module: Adds the /SAJOIN command
 # This module is oper-only.
 # To use, SAJOIN must be in one of your oper class blocks.
+# The command has three privilegies:
+# users/sajoin/self : Can use sajoin to join himself into channels
+# users/sajoin/others : Can use sajoin to join others into channels
+# users/sajoin/modes : Can specify what mode the user should receive in the channel
+# Example of use: /sajoin TestUser @#Test
 #<module name="m_sajoin.so">
 
 #-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#
