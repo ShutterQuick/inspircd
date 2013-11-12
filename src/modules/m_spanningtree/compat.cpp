@@ -173,6 +173,7 @@ void TreeSocket::WriteLine(const std::string& original_line)
 			ServerInstance->Logs->Log(MODNAME, LOG_RAWIO, "S[%d] O %s", this->GetFd(), line.c_str());
 			this->WriteData(line);
 			this->WriteData(newline);
+			ByteLimiter.Send(line.size() + newline.size());
 			return;
 		}
 	}
@@ -180,6 +181,7 @@ void TreeSocket::WriteLine(const std::string& original_line)
 	ServerInstance->Logs->Log(MODNAME, LOG_RAWIO, "S[%d] O %s", this->GetFd(), original_line.c_str());
 	this->WriteData(original_line);
 	this->WriteData(newline);
+	ByteLimiter.Send(original_line.size() + newline.size());
 }
 
 namespace

@@ -37,13 +37,16 @@
  * to it.
  */
 TreeSocket::TreeSocket(Link* link, Autoconnect* myac, const std::string& ipaddr)
-	: linkID(assign(link->Name)), LinkState(CONNECTING), MyRoot(NULL), proto_version(0), ConnectionFailureShown(false)
+	: linkID(assign(link->Name)), LinkState(CONNECTING), MyRoot(NULL), ByteLimiter(MyRoot), proto_version(0), ConnectionFailureShown(false)
 	, age(ServerInstance->Time())
 {
+	ByteLimiter.SetLink(link);
+
 	capab = new CapabData;
 	capab->link = link;
 	capab->ac = myac;
 	capab->capab_phase = 0;
+
 	if (!link->Hook.empty())
 	{
 		ServiceProvider* prov = ServerInstance->Modules->FindService(SERVICE_IOHOOK, link->Hook);
@@ -65,7 +68,7 @@ TreeSocket::TreeSocket(Link* link, Autoconnect* myac, const std::string& ipaddr)
  */
 TreeSocket::TreeSocket(int newfd, ListenSocket* via, irc::sockets::sockaddrs* client, irc::sockets::sockaddrs* server)
 	: BufferedSocket(newfd)
-	, linkID("inbound from " + client->addr()), LinkState(WAIT_AUTH_1), MyRoot(NULL), proto_version(0)
+	, linkID("inbound from " + client->addr()), LinkState(WAIT_AUTH_1), MyRoot(NULL), ByteLimiter(MyRoot), proto_version(0)
 	, ConnectionFailureShown(false), age(ServerInstance->Time())
 {
 	capab = new CapabData;
@@ -232,6 +235,7 @@ CmdResult CommandSQuit::HandleServer(TreeServer* server, std::vector<std::string
  */
 void TreeSocket::OnDataReady()
 {
+	ByteLimiter.Recv(recvq.length());
 	Utils->Creator->loopCall = true;
 	std::string line;
 	while (GetNextLine(line))

@@ -28,6 +28,7 @@
 #include "treesocket.h"
 #include "resolvers.h"
 #include "commandbuilder.h"
+#include "bwlimit.h"
 
 SpanningTreeUtilities* Utils = NULL;
 
@@ -288,6 +289,14 @@ void SpanningTreeUtilities::ReadConfiguration()
 		L->Hook = tag->getString("ssl");
 		L->Bind = tag->getString("bind");
 		L->Hidden = tag->getBool("hidden");
+		L->DCLimits = DataLimits(
+			tag->getInt("hard5", 0),
+			tag->getInt("hard15", 0),
+			tag->getInt("hard60", 0),
+			tag->getInt("soft5", 0),
+			tag->getInt("soft15", 0),
+			tag->getInt("soft60", 0)
+		);
 
 		if (L->Name.empty())
 			throw ModuleException("Invalid configuration, found a link tag without a name!" + (!L->IPAddr.empty() ? " IP address: "+L->IPAddr : ""));

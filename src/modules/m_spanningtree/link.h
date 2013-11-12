@@ -19,11 +19,13 @@
 
 
 #pragma once
+#include "bwlimit.h"
 
 class Link : public refcountbase
 {
  public:
 	reference<ConfigTag> tag;
+	DataLimits DCLimits;
 	irc::string Name;
 	std::string IPAddr;
 	int Port;

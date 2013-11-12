@@ -218,6 +218,8 @@ bool TreeSocket::Inbound_Server(parameterlist &params)
 			continue;
 		}
 
+		ByteLimiter.SetLink(x);
+
 		if (!CheckDuplicate(sname, sid))
 			return false;
 
