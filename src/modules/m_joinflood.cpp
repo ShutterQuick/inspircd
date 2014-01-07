@@ -22,6 +22,7 @@
 
 
 #include "inspircd.h"
+#include "modules/spanningtree.h"
 
 /** Holds settings and state associated with channel mode +j
  */
@@ -77,6 +78,64 @@ class joinfloodsettings
 	bool operator==(const joinfloodsettings& other) const
 	{
 		return ((this->secs == other.secs) && (this->joins == other.joins));
+	}
+};
+
+class SplitHandler : public Timer
+{
+ private:
+	bool active;
+	std::set<std::string> hostmask;
+	std::set<std::string> servers;
+
+ public:
+	SplitHandler() : Timer(120, ServerInstance->Time(), false), active(false)
+	{
+	}
+
+	bool IsActive()
+	{
+		return active;
+	}
+
+	bool HasServer(const std::string& sn)
+	{
+		return (servers.find(sn) != servers.end());
+	}
+
+	bool Tick(time_t TIME)
+	{
+		active = false;
+		hostmask.clear();
+		servers.clear();
+		return true;
+	}
+
+	void Activate(const std::string& server)
+	{
+		servers.insert(server);
+		active = true;
+		SetInterval(120);
+	}
+
+	bool Has(const std::string& hm)
+	{
+		if (!active)
+			return false;
+
+		const std::set<std::string>::const_iterator it = hostmask.find(hm);
+		if (it == hostmask.end())
+			return false;
+
+		return true;
+	}
+
+	void Add(const std::string& hm)
+	{
+		if (!active)
+			return;
+
+		hostmask.insert(hm);
 	}
 };
 
@@ -138,6 +197,7 @@ class JoinFlood : public ModeHandler
 class ModuleJoinFlood : public Module
 {
 	JoinFlood jf;
+	SplitHandler sh;
 
  public:
 	ModuleJoinFlood()
@@ -145,12 +205,33 @@ class ModuleJoinFlood : public Module
 	{
 	}
 
+	void OnEvent(Event &ev) CXX11_OVERRIDE
+	{
+		if (ev.id != "lost_server")
+			return;
+
+		sh.Activate(((DelServerEvent*)&ev)->servername);
+	}
+
+	void OnUserQuit(User* user, const std::string &reason, const std::string &oper_message) CXX11_OVERRIDE
+	{
+		if (!sh.IsActive())
+			return;
+
+		if ((ServerInstance->Config->HideSplits && reason == "*.net *.split")
+			|| (!reason.compare(0, ServerInstance->Config->ServerName.size() + 1, ServerInstance->Config->ServerName + " ")
+			&& sh.HasServer(reason.substr(ServerInstance->Config->ServerName.size() + 1))))
+		{
+			sh.Add(user->MakeHost());
+		}
+	}
+
 	ModResult OnUserPreJoin(LocalUser* user, Channel* chan, const std::string& cname, std::string& privs, const std::string& keygiven) CXX11_OVERRIDE
 	{
 		if (chan)
 		{
 			joinfloodsettings *f = jf.ext.get(chan);
-			if (f && f->islocked())
+			if (f && f->islocked() && !sh.Has(user->MakeHost()))
 			{
 				user->WriteNumeric(609, "%s :This channel is temporarily unavailable (+j). Please try again later.",chan->name.c_str());
 				return MOD_RES_DENY;
@@ -171,7 +252,7 @@ class ModuleJoinFlood : public Module
 		if (f)
 		{
 			f->addjoin();
-			if (f->shouldlock())
+			if (f->shouldlock() && !sh.Has(memb->user->MakeHost()))
 			{
 				f->clear();
 				f->lock();
