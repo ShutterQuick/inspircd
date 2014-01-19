@@ -72,6 +72,11 @@ class SQLResult : public classbase
 	/** Returns column names for the items in this row
 	 */
 	virtual void GetCols(std::vector<std::string>& result) = 0;
+
+	virtual SQLEntry GetValue(int row, int column)
+	{
+		return SQLEntry();
+	}
 };
 
 /** SQLerror holds the error state of a request.

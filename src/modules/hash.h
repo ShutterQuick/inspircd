@@ -54,6 +54,11 @@ class HashProvider : public DataProvider
 	 */
 	virtual std::string sumIV(unsigned int* IV, const char* HexMap, const std::string &sdata) = 0;
 
+	virtual bool Compare(const std::string& string, const std::string& hash)
+	{
+		return sum(string) == hash;
+	}
+
 	/** HMAC algorithm, RFC 2104 */
 	std::string hmac(const std::string& key, const std::string& msg)
 	{

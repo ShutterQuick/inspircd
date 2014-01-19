@@ -35,8 +35,9 @@ class AuthQuery : public SQLQuery
 	const std::string uid;
 	LocalIntExt& pendingExt;
 	bool verbose;
-	AuthQuery(Module* me, const std::string& u, LocalIntExt& e, bool v)
-		: SQLQuery(me), uid(u), pendingExt(e), verbose(v)
+	std::string bcryptpw;
+	AuthQuery(Module* me, const std::string& u, LocalIntExt& e, bool v, std::string bp)
+		: SQLQuery(me), uid(u), pendingExt(e), verbose(v), bcryptpw(bp)
 	{
 	}
 	
@@ -47,10 +48,19 @@ class AuthQuery : public SQLQuery
 			return;
 		if (res.Rows())
 		{
+			HashProvider* bcrypt = ServerInstance->Modules->FindDataService<HashProvider>("hash/bcrypt");
+			std::string hash = res.GetValue(0, 0).value;
+			if (bcrypt && !hash.empty())
+			{
+				if (!bcrypt->Compare(bcryptpw, hash))
+					goto bcryptfail;
+			}
+
 			pendingExt.set(user, AUTH_STATE_NONE);
 		}
 		else
 		{
+bcryptfail:
 			if (verbose)
 				ServerInstance->SNO->WriteGlobalSno('a', "Forbidden connection from %s (SQL query returned no matches)", user->GetFullRealHost().c_str());
 			pendingExt.set(user, AUTH_STATE_FAIL);
@@ -139,7 +149,9 @@ class ModuleSQLAuth : public Module
 		if (sha256)
 			userinfo["sha256pass"] = sha256->hexsum(user->password);
 
-		SQL->submit(new AuthQuery(this, user->uuid, pendingExt, verbose), freeformquery, userinfo);
+		HashProvider* bcrypt = ServerInstance->Modules->FindDataService<HashProvider>("hash/bcrypt");
+
+		SQL->submit(new AuthQuery(this, user->uuid, pendingExt, verbose, (bcrypt ? user->password : "")), freeformquery, userinfo);
 
 		return MOD_RES_PASSTHRU;
 	}
