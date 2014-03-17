@@ -54,6 +54,16 @@ class CommandStats : public Command
 	}
 };
 
+// Used in 'z'. Placed here because:
+// "A local type, a type with no linkage, an unnamed type or a type compounded from any of these types shall not be used as a template-argument for a template type-parameter."
+struct cmp_time
+	{
+	bool operator() (const std::pair<Module*, long>& lhs, const std::pair<Module*, long>& rhs) const
+	{
+		return lhs.second > rhs.second;
+	}
+};
+
 void CommandStats::DoStats(char statschar, User* user, string_list &results)
 {
 	bool isPublic = ServerInstance->Config->UserStats.find(statschar) != std::string::npos;
@@ -287,7 +297,24 @@ void CommandStats::DoStats(char statschar, User* user, string_list &results)
 				snprintf(percent, 30, "%03.5f%%", per);
 				results.push_back("249 "+user->nick+" :CPU Use (total):  "+percent);
 			}
+
 #endif
+
+			results.push_back("249 " + user->nick + " :Module time usage:");
+			long totalTime = 0;
+
+			std::set<std::pair<Module*, long>, cmp_time> moduleTime;
+
+			const ModuleManager::ModuleMap& mods = ServerInstance->Modules->GetModules();
+		  	for (ModuleManager::ModuleMap::const_iterator i = mods.begin(); i != mods.end(); ++i)
+			{
+				moduleTime.insert(std::make_pair(i->second, i->second->cputime));
+				totalTime += i->second->cputime;
+			}
+
+			for (std::set<std::pair<Module*, long> >::const_iterator i = moduleTime.begin(); i != moduleTime.end(); ++i)
+				results.push_back("249 " + user->nick + " :" + ConvToStr(i->second / 1000000) + "ms - " + ConvToStr(((double)i->second / totalTime) * 100) + " % - " + i->first->ModuleSourceFile);
+			
 		}
 		break;
 

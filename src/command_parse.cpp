@@ -314,7 +314,17 @@ void CommandParser::ProcessCommand(LocalUser *user, std::string &cmd)
 		/*
 		 * WARNING: be careful, the user may be deleted soon
 		 */
-		CmdResult result = handler->Handle(command_p, user);
+		CmdResult result;
+		if (handler->creator)
+		{
+			ServerInstance->UpdateTime();
+			long time = ServerInstance->Time_ns();
+			result = handler->Handle(command_p, user);
+			ServerInstance->UpdateTime();
+			handler->creator->cputime = ServerInstance->Time_ns() - time;
+		}
+		else
+			result = handler->Handle(command_p, user);
 
 		FOREACH_MOD(OnPostCommand, (handler, command_p, user, result, cmd));
 	}

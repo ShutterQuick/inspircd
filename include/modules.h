@@ -126,6 +126,8 @@ struct ModResult {
 	for (IntModuleList::const_reverse_iterator _i = _handlers.rbegin(), _next; _i != _handlers.rend(); _i = _next) \
 	{ \
 		_next = _i+1; \
+		ServerInstance->UpdateTime(); \
+		long time = ServerInstance->Time_ns(); \
 		try \
 		{ \
 			(*_i)->y x ; \
@@ -134,6 +136,8 @@ struct ModResult {
 		{ \
 			ServerInstance->Logs->Log("MODULE", LOG_DEFAULT, "Exception caught: " + modexcept.GetReason()); \
 		} \
+		ServerInstance->UpdateTime(); \
+		(*_i)->cputime = ServerInstance->Time_ns() - time; \
 	} \
 } while (0);
 
@@ -149,6 +153,8 @@ do { \
 	for (IntModuleList::const_reverse_iterator _i = _handlers.rbegin(), _next; _i != _handlers.rend(); _i = _next) \
 	{ \
 		_next = _i+1; \
+		ServerInstance->UpdateTime(); \
+		long time = ServerInstance->Time_ns(); \
 		try \
 		{ \
 			v = (*_i)->n args;
@@ -159,6 +165,8 @@ do { \
 		{ \
 			ServerInstance->Logs->Log("MODULE", LOG_DEFAULT, "Exception caught: " + (except_ ## n).GetReason()); \
 		} \
+		ServerInstance->UpdateTime(); \
+		(*_i)->cputime = ServerInstance->Time_ns() - time; \
 	} \
 } while(0)
 
@@ -282,6 +290,8 @@ class CoreExport Module : public classbase, public usecountbase
 	void DetachEvent(Implementation i);
 
  public:
+	time_t cputime;
+
 	/** File that this module was loaded from
 	 */
 	std::string ModuleSourceFile;
