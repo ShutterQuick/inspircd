@@ -22,19 +22,39 @@
 
 
 #include "inspircd.h"
+#include "modules/hash.h"
 
 bool InspIRCd::PassCompare(Extensible* ex, const std::string& data, const std::string& input, const std::string& hashtype)
 {
-	ModResult res;
-	FIRST_MOD_RESULT(OnPassCompare, res, (ex, data, input, hashtype));
+	if (hashtype.substr(0,5) == "hmac-")
+	{
+		std::string type = hashtype.substr(5);
+		HashProvider* hp = ServerInstance->Modules->FindDataService<HashProvider>("hash/" + type);
+		if (hp)
+		{
+			// this is a valid hash, from here on we either accept or deny
+			std::string::size_type sep = data.find('$');
+			if (sep == std::string::npos)
+				return false;
 
-	/* Module matched */
-	if (res == MOD_RES_ALLOW)
-		return true;
+			std::string salt = Base64ToBin(data.substr(0, sep));
+			std::string target = Base64ToBin(data.substr(sep + 1));
+			std::string hmac = hp->HMAC(salt, input);
+			if (!hp->out_size || !hp->block_size)
+			{
+				ServerInstance->Logs->Log("HASH", LOG_DEFAULT, "Tried to use HMAC with %s, which does not support HMAC", type.c_str());
+				return false;
+			}
 
-	/* Module explicitly didnt match */
-	if (res == MOD_RES_DENY)
-		return false;
+			return target == hmac;
+		}
+	}
+	else
+	{
+		HashProvider* hp = ServerInstance->Modules->FindDataService<HashProvider>("hash/" + hashtype);
+		if (hp)
+			return hp->Compare(input, data);
+	}
 
 	/* We dont handle any hash types except for plaintext - Thanks tra26 */
 	if (!hashtype.empty() && hashtype != "plaintext")

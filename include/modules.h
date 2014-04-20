@@ -264,7 +264,7 @@ enum Implementation
 	I_OnChangeLocalUserGECOS, I_OnUserRegister, I_OnChannelPreDelete, I_OnChannelDelete,
 	I_OnPostOper, I_OnSyncNetwork, I_OnSetAway, I_OnPostCommand, I_OnPostJoin,
 	I_OnWhoisLine, I_OnBuildNeighborList, I_OnGarbageCollect, I_OnSetConnectClass,
-	I_OnText, I_OnPassCompare, I_OnNamesListItem, I_OnNumeric,
+	I_OnText, I_OnNamesListItem, I_OnNumeric,
 	I_OnPreRehash, I_OnModuleRehash, I_OnSendWhoLine, I_OnChangeIdent, I_OnSetUserIP,
 	I_END
 };
@@ -959,18 +959,6 @@ class CoreExport Module : public classbase, public usecountbase
 	 * @param event The Event class being received
 	 */
 	virtual void OnEvent(Event& event);
-
-	/** Called whenever a password check is to be made. Replaces the old OldOperCompare API.
-	 * The password field (from the config file) is in 'password' and is to be compared against
-	 * 'input'. This method allows for encryption of passwords (oper, connect:allow, die/restart, etc).
-	 * You should return a nonzero value to override the normal comparison, or zero to pass it on.
-	 * @param ex The object that's causing the authentication (User* for \<oper> \<connect:allow> etc, Server* for \<link>).
-	 * @param password The password from the configuration file (the password="" value).
-	 * @param input The password entered by the user or whoever.
-	 * @param hashtype The hash value from the config
-	 * @return 0 to do nothing (pass on to next module/default), 1 == password is OK, -1 == password is not OK
-	 */
-	virtual ModResult OnPassCompare(Extensible* ex, const std::string &password, const std::string &input, const std::string& hashtype);
 
 	/** Called whenever a user is given usermode +o, anywhere on the network.
 	 * You cannot override this and prevent it from happening as it is already happened and
