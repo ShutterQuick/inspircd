@@ -28,7 +28,7 @@ class CommandMkpasswd : public Command
  public:
 	CommandMkpasswd(Module* Creator) : Command(Creator, "MKPASSWD", 2)
 	{
-		syntax = "<hashtype> <any-text>";
+		syntax = "<algorithm> <password>";
 		Penalty = 5;
 	}
 
@@ -44,7 +44,13 @@ class CommandMkpasswd : public Command
 				return;
 			}
 			std::string salt = ServerInstance->GenRandomStr(6, false);
-			std::string target = hp->hmac(salt, stuff);
+			std::string target = hp->HMAC(salt, stuff);
+			if (!hp->out_size || !hp->block_size)
+			{
+				user->WriteNotice(algo + " does not support HMAC");
+				return;
+			}
+
 			std::string str = BinToBase64(salt) + "$" + BinToBase64(target, NULL, 0);
 
 			user->WriteNotice(algo + " hashed password for " + stuff + " is " + str);
@@ -54,8 +60,7 @@ class CommandMkpasswd : public Command
 		if (hp)
 		{
 			/* Now attempt to generate a hash */
-			std::string hexsum = hp->hexsum(stuff);
-			user->WriteNotice(algo + " hashed password for " + stuff + " is " + hexsum);
+			user->WriteNotice(algo + " hashed password for " + stuff + " is " + hp->Generate(stuff));
 		}
 		else
 		{
@@ -71,51 +76,13 @@ class CommandMkpasswd : public Command
 	}
 };
 
-class ModuleOperHash : public Module
+class ModuleMKPasswd : public Module
 {
 	CommandMkpasswd cmd;
  public:
 
-	ModuleOperHash() : cmd(this)
+	ModuleMKPasswd() : cmd(this)
 	{
-	}
-
-	ModResult OnPassCompare(Extensible* ex, const std::string &data, const std::string &input, const std::string &hashtype) CXX11_OVERRIDE
-	{
-		if (hashtype.substr(0,5) == "hmac-")
-		{
-			std::string type = hashtype.substr(5);
-			HashProvider* hp = ServerInstance->Modules->FindDataService<HashProvider>("hash/" + type);
-			if (!hp)
-				return MOD_RES_PASSTHRU;
-			// this is a valid hash, from here on we either accept or deny
-			std::string::size_type sep = data.find('$');
-			if (sep == std::string::npos)
-				return MOD_RES_DENY;
-			std::string salt = Base64ToBin(data.substr(0, sep));
-			std::string target = Base64ToBin(data.substr(sep + 1));
-
-			if (target == hp->hmac(salt, input))
-				return MOD_RES_ALLOW;
-			else
-				return MOD_RES_DENY;
-		}
-
-		HashProvider* hp = ServerInstance->Modules->FindDataService<HashProvider>("hash/" + hashtype);
-
-		/* Is this a valid hash name? */
-		if (hp)
-		{
-			/* Compare the hash in the config to the generated hash */
-			if (data == hp->hexsum(input))
-				return MOD_RES_ALLOW;
-			else
-				/* No match, and must be hashed, forbid */
-				return MOD_RES_DENY;
-		}
-
-		/* Not a hash, fall through to strcmp in core */
-		return MOD_RES_PASSTHRU;
 	}
 
 	Version GetVersion() CXX11_OVERRIDE
@@ -124,4 +91,4 @@ class ModuleOperHash : public Module
 	}
 };
 
-MODULE_INIT(ModuleOperHash)
+MODULE_INIT(ModuleMKPasswd)

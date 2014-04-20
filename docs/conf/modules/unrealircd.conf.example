@@ -276,7 +276,7 @@
 
 <module name="m_operlevels.so">
 <module name="m_opermodes.so">
-<module name="m_password_hash.so">
+<module name="m_mkpasswd.so">
 <module name="m_muteban.so">
 
 #-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#

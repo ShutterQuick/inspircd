@@ -197,8 +197,7 @@
 <power
        # hash: what hash these passwords are hashed with.
        # Requires the module for selected hash (m_md5.so, m_sha256.so
-       # or m_ripemd160.so) be loaded and the password hashing module
-       # (m_password_hash.so) loaded.
+       # or m_ripemd160.so) be loaded
        # Options here are: "md5", "sha256" and "ripemd160", or one of
        # these prefixed with "hmac-", e.g.: "hmac-sha256".
        # Optional, but recommended. Create hashed password with:
@@ -257,7 +256,6 @@
 
          # hash: what hash this password is hashed with. requires the module
          # for selected hash (m_md5.so, m_sha256.so or m_ripemd160.so) be
-         # loaded and the password hashing module (m_password_hash.so)
          # loaded. Options here are: "md5", "sha256" and "ripemd160".
          # Optional, but recommended. Create hashed password with:
          # /mkpasswd <hash> <password>
