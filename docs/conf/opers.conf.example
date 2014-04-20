@@ -144,14 +144,14 @@
       # hash: What hash this password is hashed with.
       # Requires the module for selected hash (m_md5.so, m_sha256.so
       # or m_ripemd160.so) be loaded and the password hashing module
-      # (m_password_hash.so) loaded.
+      # (m_mkpasswd.so) loaded.
       # Options here are: "md5", "sha256" and "ripemd160", or one of
       # these prefixed with "hmac-", e.g.: "hmac-sha256".
       # Create hashed passwords with: /mkpasswd <hash> <password>
       hash="hmac-sha256"
 
-      # password: A hash of the password (see above option) hashed
-      # with /mkpasswd <hash> <password>. See m_password_hash in modules.conf
+      # password: a hash of your password (see above option) hashed
+      # with /mkpasswd <hash> <password> . See m_mkpasswd in modules.conf
       # for more information about password hashing.
       password="qQmv3LcF$Qh63wzmtUqWp9OXnLwe7yv1GcBwHpq59k2a0UrY8xe0"
 

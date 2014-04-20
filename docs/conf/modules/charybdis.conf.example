@@ -176,7 +176,7 @@
 <module name="m_operchans.so">
 <module name="m_operlog.so">
 <module name="m_opermodes.so">
-<module name="m_password_hash.so">
+<module name="m_mkpasswd.so">
 <module name="m_permchannels.so">
 <module name="m_muteban.so">
 <module name="m_redirect.so">

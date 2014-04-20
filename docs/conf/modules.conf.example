@@ -30,7 +30,7 @@
 # cryptographic uses and security.
 #
 # IMPORTANT:
-# Other modules such as m_cloaking.so and m_password_hash.so may rely on
+# Other modules such as m_cloaking.so and m_mkpasswd.so may rely on
 # this module being loaded to function.
 #
 #<module name="m_md5.so">
@@ -40,7 +40,7 @@
 # usually for cryptographic uses and security.
 #
 # IMPORTANT:
-# Other modules such as m_password_hash.so may rely on this module being
+# Other modules such as m_mkpasswd.so may rely on this module being
 # loaded to function. Certain modules such as m_spanningtree.so will
 # function without this module but when it is loaded their features will
 # be enhanced (for example the addition of HMAC authentication).
@@ -620,14 +620,12 @@
 #<module name="m_customtitle.so">
 #
 #-#-#-#-#-#-#-#-#-#-  CUSTOM TITLE CONFIGURATION   -#-#-#-#-#-#-#-#-#-#
-#  name     - The username used to identify.
-#  password - The password used to identify.
-#  hash     - The hash for the specific user's password (optional).
-#             m_password_hash.so and a hashing module must be loaded
-#             for this to work.
-#  host     - Allowed hostmask (optional).
-#  title    - Title shown in whois.
-#  vhost    - Displayed host (optional).
+#  name              - The username used to identify 
+#  password          - The password used to identify
+#  hash              - The hash for the specific user's password (optional)
+#  host              - Allowed hostmask [optional]
+#  title             - Title shown in whois
+#  vhost             - Displayed host [optional]
 #
 #<title name="foo" password="bar" title="Official Chat Helper">
 #<title name="bar" password="foo" host="ident@host.name" title="Official Chat Helper" vhost="helper.network.chat">
@@ -1305,7 +1303,7 @@
 #-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#-#
 # Password hash module: Allows hashed passwords to be used.
 # To be useful, a hashing module like m_sha256.so also needs to be loaded.
-#<module name="m_password_hash.so">
+#<module name="m_mkpasswd.so">
 #
 #-#-#-#-#-#-#-#-#-# PASSWORD HASH CONFIGURATION #-#-#-#-#-#-#-#-#-#-#-#
 #
@@ -1908,7 +1906,7 @@
 # pass       - Password for the vhost.                                #
 #                                                                     #
 # hash       - The hash for the specific user (optional)              #
-#              m_password_hash.so and a hashing module must be loaded #
+#              m_mkpasswd.so and a hashing module must be loaded #
 #              for this to work.                                      #
 #                                                                     #
 # host       - Vhost to set.                                          #

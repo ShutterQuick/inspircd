@@ -28,7 +28,7 @@ class CommandMkpasswd : public Command
  public:
 	CommandMkpasswd(Module* Creator) : Command(Creator, "MKPASSWD", 2)
 	{
-		syntax = "<hashtype> <any-text>";
+		syntax = "<algorithm> <password>";
 		Penalty = 5;
 	}
 
@@ -44,7 +44,13 @@ class CommandMkpasswd : public Command
 				return;
 			}
 			std::string salt = ServerInstance->GenRandomStr(6, false);
-			std::string target = hp->hmac(salt, stuff);
+			std::string target = hp->HMAC(salt, stuff);
+			if (!hp->out_size || !hp->block_size)
+			{
+				user->WriteNotice(algo + " does not support HMAC");
+				return;
+			}
+
 			std::string str = BinToBase64(salt) + "$" + BinToBase64(target, NULL, 0);
 
 			user->WriteNotice(algo + " hashed password for " + stuff + " is " + str);
@@ -54,8 +60,7 @@ class CommandMkpasswd : public Command
 		if (hp)
 		{
 			/* Now attempt to generate a hash */
-			std::string hexsum = hp->hexsum(stuff);
-			user->WriteNotice(algo + " hashed password for " + stuff + " is " + hexsum);
+			user->WriteNotice(algo + " hashed password for " + stuff + " is " + hp->Generate(stuff));
 		}
 		else
 		{
@@ -71,15 +76,16 @@ class CommandMkpasswd : public Command
 	}
 };
 
-class ModuleOperHash : public Module
+class ModuleMKPasswd : public Module
 {
 	CommandMkpasswd cmd;
  public:
 
-	ModuleOperHash() : cmd(this)
+	ModuleMKPasswd() : cmd(this)
 	{
 	}
 
+<<<<<<< HEAD:src/modules/m_password_hash.cpp
 	ModResult OnPassCompare(Extensible* ex, const std::string &data, const std::string &input, const std::string &hashtype) CXX11_OVERRIDE
 	{
 		if (!hashtype.compare(0, 5, "hmac-", 5))
@@ -118,10 +124,12 @@ class ModuleOperHash : public Module
 		return MOD_RES_PASSTHRU;
 	}
 
+=======
+>>>>>>> Renamed m_password_hash.cpp and updated docs:src/modules/m_mkpasswd.cpp
 	Version GetVersion() CXX11_OVERRIDE
 	{
 		return Version("Allows for hashed oper passwords",VF_VENDOR);
 	}
 };
 
-MODULE_INIT(ModuleOperHash)
+MODULE_INIT(ModuleMKPasswd)
