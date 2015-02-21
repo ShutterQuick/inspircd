@@ -366,28 +366,41 @@ bool Channel::IsBanned(User* user)
 	if (result != MOD_RES_PASSTHRU)
 		return (result == MOD_RES_DENY);
 
+	bool isBanned = false;
 	ListModeBase* banlm = static_cast<ListModeBase*>(*ban);
 	const ListModeBase::ModeList* bans = banlm->GetList(this);
 	if (bans)
 	{
 		for (ListModeBase::ModeList::const_iterator it = bans->begin(); it != bans->end(); it++)
 		{
+			const std::string& mask = it->mask;
+			const bool isInvExt = mask.size() >= 3 && mask[0] == '~' && mask[2] == ':';
 			if (CheckBan(user, it->mask))
-				return true;
+				isBanned = true;
+			else if (isInvExt)
+				return false;
 		}
 	}
-	return false;
+	return isBanned;
 }
 
 bool Channel::CheckBan(User* user, const std::string& mask)
 {
+	const size_t mask_length = mask.length();
+	const bool isInvExt = mask_length >= 3 && mask[0] == '~' && mask[2] == ':';
+	const std::string& bm = isInvExt ? mask.substr(1) : mask;
+
 	ModResult result;
-	FIRST_MOD_RESULT(OnCheckBan, result, (user, this, mask));
+	FIRST_MOD_RESULT(OnCheckBan, result, (user, this, bm));
+	// If it is an inverted extban, invert our result
+	if (isInvExt)
+		return (result != MOD_RES_DENY);
+
 	if (result != MOD_RES_PASSTHRU)
 		return (result == MOD_RES_DENY);
 
 	// extbans were handled above, if this is one it obviously didn't match
-	if ((mask.length() <= 2) || (mask[1] == ':'))
+	if ((mask_length <= 2) || (mask[1] == ':'))
 		return false;
 
 	std::string::size_type at = mask.find('@');
@@ -414,16 +427,24 @@ ModResult Channel::GetExtBanStatus(User *user, char type)
 	if (rv != MOD_RES_PASSTHRU)
 		return rv;
 
+	bool doDeny = false;
 	ListModeBase* banlm = static_cast<ListModeBase*>(*ban);
 	const ListModeBase::ModeList* bans = banlm->GetList(this);
 	if (bans)
 	{
 		for (ListModeBase::ModeList::const_iterator it = bans->begin(); it != bans->end(); ++it)
 		{
+			const std::string& mask = it->mask;
+			const bool isInvExt = mask.size() >= 3 && mask[0] == '~' && mask[2] == ':';
 			if (CheckBan(user, it->mask))
-				return MOD_RES_DENY;
+				doDeny = true;
+			else if (isInvExt)
+				return MOD_RES_PASSTHRU;
 		}
 	}
+
+	if (doDeny)
+		return MOD_RES_DENY;
 	return MOD_RES_PASSTHRU;
 }
 
